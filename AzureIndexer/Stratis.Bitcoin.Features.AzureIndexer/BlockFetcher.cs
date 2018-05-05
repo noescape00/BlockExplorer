@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using Microsoft.Extensions.Logging;
 
 namespace Stratis.Bitcoin.Features.AzureIndexer
 {
@@ -38,6 +39,9 @@ namespace Stratis.Bitcoin.Features.AzureIndexer
             }
         }
         private readonly IBlocksRepository _BlocksRepository;
+
+        private readonly ILogger logger;
+
         public IBlocksRepository BlocksRepository
         {
             get
@@ -55,9 +59,11 @@ namespace Stratis.Bitcoin.Features.AzureIndexer
             }
         }
 
-        public BlockFetcher(Checkpoint checkpoint, Node node, ChainBase chain = null)
+        public BlockFetcher(Checkpoint checkpoint, Node node, ILoggerFactory loggerFactory, ChainBase chain = null)
         {
-            if(checkpoint == null)
+            this.logger = loggerFactory.CreateLogger(GetType().FullName);
+
+            if (checkpoint == null)
                 throw new ArgumentNullException("checkpoint");
             if(node == null)
                 throw new ArgumentNullException("node");
@@ -169,12 +175,18 @@ namespace Stratis.Bitcoin.Features.AzureIndexer
 
         public void SaveCheckpoint()
         {
-            if(_LastProcessed != null)
+            this.logger.LogTrace("()");
+
+            if (_LastProcessed != null)
             {
+                this.logger.LogTrace("Saving checkpoints");
                 _Checkpoint.SaveProgress(_LastProcessed);
+                this.logger.LogTrace("Saving completed");
                 IndexerTrace.CheckpointSaved(_LastProcessed, _Checkpoint.CheckpointName);
             }
             _LastSaved = DateTime.UtcNow;
+
+            this.logger.LogTrace("(-)");
         }
 
         public int FromHeight

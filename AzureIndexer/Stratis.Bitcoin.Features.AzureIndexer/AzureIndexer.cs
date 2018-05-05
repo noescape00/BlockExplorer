@@ -12,6 +12,7 @@ using System.Net;
 using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace Stratis.Bitcoin.Features.AzureIndexer
 {
@@ -25,13 +26,16 @@ namespace Stratis.Bitcoin.Features.AzureIndexer
 
     public class AzureIndexer
     {
-        public static AzureIndexer CreateIndexer(IConfiguration config)
+        public static AzureIndexer CreateIndexer(IConfiguration config, ILoggerFactory loggerFactory)
         {
-            var indexerConfig = IndexerConfiguration.FromConfiguration(config);
+            var indexerConfig = IndexerConfiguration.FromConfiguration(config, loggerFactory);
             return indexerConfig.CreateIndexer();
         }
 
         private readonly IndexerConfiguration _Configuration;
+
+        private readonly ILoggerFactory loggerFactory;
+
         public IndexerConfiguration Configuration
         {
             get
@@ -40,7 +44,7 @@ namespace Stratis.Bitcoin.Features.AzureIndexer
             }
         }
 
-        public AzureIndexer(IndexerConfiguration configuration)
+        public AzureIndexer(IndexerConfiguration configuration, ILoggerFactory loggerFactory)
         {
             if(configuration == null)
                 throw new ArgumentNullException("configuration");
@@ -49,6 +53,7 @@ namespace Stratis.Bitcoin.Features.AzureIndexer
             this._Configuration = configuration;
             this.FromHeight = 0;
             this.ToHeight = int.MaxValue;
+            this.loggerFactory = loggerFactory;
         }
 
         public long IndexTransactions(ChainBase chain = null)
@@ -72,7 +77,7 @@ namespace Stratis.Bitcoin.Features.AzureIndexer
         {
             var chk = this.GetCheckpoint(checkpoint);
             if(this.IgnoreCheckpoints)
-                chk = new Checkpoint(chk.CheckpointName, this.Configuration.Network, null, null);
+                chk = new Checkpoint(chk.CheckpointName, this.Configuration.Network, null, null, this.loggerFactory);
             return chk;
         }
 
@@ -175,7 +180,7 @@ namespace Stratis.Bitcoin.Features.AzureIndexer
         {
             return new CheckpointRepository(this._Configuration.GetBlocksContainer(), 
                 this._Configuration.Network, string.IsNullOrWhiteSpace(this._Configuration.CheckpointSetName) 
-                ? "default" : this._Configuration.CheckpointSetName);
+                ? "default" : this._Configuration.CheckpointSetName, this.loggerFactory);
         }
 
         /// <summary>

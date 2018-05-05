@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using NBitcoin;
 
 namespace Stratis.Bitcoin.Features.AzureIndexer.Tests
@@ -26,7 +27,7 @@ namespace Stratis.Bitcoin.Features.AzureIndexer.Tests
 		public static IndexerConfiguration CreateConfiguration()
 		{
 			var confBuilder = new ConfigurationBuilder();
-			var config = IndexerConfiguration.FromConfiguration(confBuilder.Build());
+			var config = IndexerConfiguration.FromConfiguration(confBuilder.Build(), new LoggerFactory());
 			return config;
 		}
 
@@ -36,7 +37,7 @@ namespace Stratis.Bitcoin.Features.AzureIndexer.Tests
             TestUtils.EnsureNew(folder);
 
             var config = AzureIndexerLoop.IndexerConfigFromSettings(
-                new AzureIndexerSettings() { StorageNamespace = folder }, Network.TestNet);
+                new AzureIndexerSettings() { StorageNamespace = folder }, Network.TestNet, new LoggerFactory());
 
             _Importer = config.CreateIndexer();
 

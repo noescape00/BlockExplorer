@@ -9,14 +9,17 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.ExceptionServices;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace Stratis.Bitcoin.Features.AzureIndexer
 {
     public class IndexerConfiguration
     {
-        public static IndexerConfiguration FromConfiguration(IConfiguration configuration)
+        private readonly ILoggerFactory loggerFactory;
+
+        public static IndexerConfiguration FromConfiguration(IConfiguration configuration, ILoggerFactory loggerFactory)
         {
-            IndexerConfiguration indexerConfig = new IndexerConfiguration();
+            IndexerConfiguration indexerConfig = new IndexerConfiguration(loggerFactory);
             Fill(configuration, indexerConfig);
             return indexerConfig;
         }
@@ -72,9 +75,10 @@ namespace Stratis.Bitcoin.Features.AzureIndexer
                 throw new IndexerConfigurationErrorsException("AppSetting " + setting + " not found");
             return result;
         }
-        public IndexerConfiguration()
+        public IndexerConfiguration(ILoggerFactory loggerFactory)
         {
             Network = Network.Main;
+            this.loggerFactory = loggerFactory;
         }
         public Network Network
         {
@@ -90,7 +94,7 @@ namespace Stratis.Bitcoin.Features.AzureIndexer
 
         public AzureIndexer CreateIndexer()
         {
-            return new AzureIndexer(this);
+            return new AzureIndexer(this, this.loggerFactory);
         }
 
         public Node ConnectToNode(bool isRelay)

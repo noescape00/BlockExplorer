@@ -52,7 +52,9 @@ namespace Stratis.Bitcoin.Features.AzureIndexer
 
         /// <summary>The Indexer Configuration.</summary>
         public IndexerConfiguration IndexerConfig { get; private set; }
-        
+
+        private readonly ILoggerFactory loggerFactory;
+
         /// <summary>
         /// Constructs the AzureIndexerLoop.
         /// </summary>
@@ -66,6 +68,7 @@ namespace Stratis.Bitcoin.Features.AzureIndexer
             this.nodeLifetime = fullNode.NodeLifetime;
             this.indexerSettings = fullNode.NodeService<AzureIndexerSettings>();
             this.logger = loggerFactory.CreateLogger(GetType().FullName);
+            this.loggerFactory = loggerFactory;
         }
 
         /// <summary>
@@ -74,9 +77,9 @@ namespace Stratis.Bitcoin.Features.AzureIndexer
         /// <param name="indexerSettings">The AzureIndexerSettings object to use.</param>
         /// <param name="network">The network to use.</param>
         /// <returns>An IndexerConfiguration object derived from the AzureIndexerSettings object and network.</returns>
-        public static IndexerConfiguration IndexerConfigFromSettings(AzureIndexerSettings indexerSettings, Network network)
+        public static IndexerConfiguration IndexerConfigFromSettings(AzureIndexerSettings indexerSettings, Network network, ILoggerFactory loggerFactory)
         {
-            IndexerConfiguration indexerConfig = new IndexerConfiguration();
+            IndexerConfiguration indexerConfig = new IndexerConfiguration(loggerFactory);
         
             indexerConfig.StorageCredentials = new StorageCredentials(
                 indexerSettings.AzureAccountName, indexerSettings.AzureKey);
@@ -95,7 +98,7 @@ namespace Stratis.Bitcoin.Features.AzureIndexer
         {
             this.logger.LogTrace("()");
 
-            this.IndexerConfig = IndexerConfigFromSettings(this.indexerSettings, this.FullNode.Network);
+            this.IndexerConfig = IndexerConfigFromSettings(this.indexerSettings, this.FullNode.Network, this.loggerFactory);
 
             var indexer = this.IndexerConfig.CreateIndexer();
             indexer.Configuration.EnsureSetup();
